@@ -43,22 +43,44 @@ public final class Main {
     public static void main( @Nullable String... args ) {
         System.out.println( "Program Start\n" );
 
+        demoDataPullWithBlockingRead();
+        System.out.println();
+        demoDataPullWithSubscriptionRead();
+        System.out.println();
+        demoDataPushWithSubscriptionRead();
+
+        System.out.println( "\nProgram End" );
+    }
+
+    private static void demoDataPullWithBlockingRead() {
+        System.out.println( "Demoing data pull with blocking read..." );
+
         System.out.println( "Pulling data..." );
-        Observable<Integer> allNumbersObs = createPullTheDataObs();
+        final Observable<Integer> allNumbersObs = createPullTheDataObs();
+
         System.out.println( "Extracting data as list from Pull Data Flux..." );
         List<Integer> allNumbers = extractAsList( allNumbersObs );
         System.out.println( "All Numbers: " + allNumbers );
+    }
+
+    private static void demoDataPullWithSubscriptionRead() {
+        System.out.println( "Demoing data pull with subscription read..." );
 
         System.out.println( "Pulling data..." );
-        allNumbersObs = createPullTheDataObs();
+        final Observable<Integer> allNumbersObs = createPullTheDataObs();
+
         System.out.println( "Subscribing to Pull Data Flux..." );
         allNumbersObs.subscribe( System.out::println );
+    }
+
+    private static void demoDataPushWithSubscriptionRead() {
+        System.out.println( "Demoing data push with subscription read..." );
 
         System.out.println( "\nPushing data..." );
-        allNumbersObs = createPushTheDataObs();
-        allNumbersObs.subscribe( System.out::println );
+        final Observable<Integer> allNumbersObs = createPushTheDataObs();
 
-        System.out.println( "\nProgram End" );
+        System.out.println( "Subscribing to Push Data Flux..." );
+        allNumbersObs.subscribe( System.out::println );
     }
 
     @Nonnull
