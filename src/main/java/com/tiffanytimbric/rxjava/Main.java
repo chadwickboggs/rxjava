@@ -12,6 +12,8 @@ import java.util.List;
 /**
  * The Reactive eXtensions API supports two methods of data flow, push and pull.
  * The Java Streams API support supports only one method of data flow, pull.
+ * Reactive Streams defines pull data flow as a "cold" publisher, and the push
+ * data flow as a "hot" publisher.
  * <p><p>
  * <h3>Data Flow Types</h3>
  * <ul>
@@ -77,10 +79,11 @@ public final class Main {
         System.out.println( "Demoing data push with subscription read..." );
 
         System.out.println( "\nPushing data..." );
-        final Observable<Integer> allNumbersObs = createPushTheDataObs();
+        final Observable<Integer> allNumbersObs = createPushTheDataObs( 8 );
 
         System.out.println( "Subscribing to Push Data Flux..." );
         allNumbersObs.subscribe( System.out::println );
+        allNumbersObs.publish().connect();
     }
 
     @Nonnull
@@ -105,8 +108,23 @@ public final class Main {
     }
 
     @Nonnull
-    private static Observable<Integer> createPushTheDataObs() {
-        return Observable.empty();
+    private static Observable<Integer> createPushTheDataObs( int maxValue ) {
+        final Single<Integer> zeroMono = Single.just( 0 );
+
+        final Observable<Integer> oddNumbersObs = Observable.create( emitter -> new Thread( () -> {
+            for ( int count = 1; count <= maxValue; count += 2 ) {
+                emitter.onNext( count );
+            }
+        } ).start() );
+        final Observable<Integer> evenNumbersObs = Observable.create( emitter -> new Thread( () -> {
+            for ( int count = 2; count <= maxValue; count += 2 ) {
+                emitter.onNext( count );
+            }
+        } ).start() );
+
+        return zeroMono.toObservable()
+                .mergeWith( oddNumbersObs )
+                .mergeWith( evenNumbersObs );
     }
 
 }
