@@ -7,6 +7,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 /**
@@ -41,6 +42,11 @@ import java.util.List;
  * use subscriptions instead of blocking reads.
  */
 public final class Main {
+
+    public static final int PUBLISH_SLEEP_BOUND = 501;
+    public static final int PUBLISH_MAX_VALUE = 8;
+
+    private static final Random random = new Random( System.currentTimeMillis() );
 
     public static void main( @Nullable String... args ) {
         System.out.println( "Program Start\n" );
@@ -79,7 +85,7 @@ public final class Main {
         System.out.println( "Demoing data push with subscription read..." );
 
         System.out.println( "\nPushing data..." );
-        final Observable<Integer> allNumbersObs = createPushTheDataObs( 8 );
+        final Observable<Integer> allNumbersObs = createPushTheDataObs( PUBLISH_MAX_VALUE );
 
         System.out.println( "Subscribing to Push Data Flux..." );
         allNumbersObs.subscribe( System.out::println );
@@ -113,11 +119,21 @@ public final class Main {
 
         final Observable<Integer> oddNumbersObs = Observable.create( emitter -> new Thread( () -> {
             for ( int count = 1; count <= maxValue; count += 2 ) {
+                try {
+                    Thread.sleep( random.nextInt( PUBLISH_SLEEP_BOUND ) );
+                } catch ( Throwable ignored ) {
+                }
+
                 emitter.onNext( count );
             }
         } ).start() );
         final Observable<Integer> evenNumbersObs = Observable.create( emitter -> new Thread( () -> {
             for ( int count = 2; count <= maxValue; count += 2 ) {
+                try {
+                    Thread.sleep( random.nextInt( PUBLISH_SLEEP_BOUND ) );
+                } catch ( Throwable ignored ) {
+                }
+
                 emitter.onNext( count );
             }
         } ).start() );
