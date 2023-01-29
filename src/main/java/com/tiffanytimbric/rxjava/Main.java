@@ -6,8 +6,10 @@ import rx.Single;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 
 
 /**
@@ -56,6 +58,8 @@ public final class Main {
         demoDataPullWithSubscriptionRead();
         System.out.println();
         demoDataPushWithSubscriptionRead();
+        System.out.println();
+        demoDataPushWithSubscriptionReadSorted();
 
         System.out.println( "\nProgram End" );
     }
@@ -90,6 +94,32 @@ public final class Main {
         System.out.println( "Subscribing to Push Data Flux..." );
         allNumbersObs.subscribe( System.out::println );
         allNumbersObs.publish().connect();
+
+        sleep( PUBLISH_SLEEP_BOUND * ( PUBLISH_MAX_VALUE * 3 / 4 ) );
+    }
+
+    private static void demoDataPushWithSubscriptionReadSorted() {
+        System.out.println( "Demoing data push with subscription read sorted..." );
+
+        System.out.println( "\nPushing data..." );
+        final Observable<Integer> allNumbersObs = createPushTheDataObs( PUBLISH_MAX_VALUE );
+        final Observable<Integer> allNumbersSortedObs = allNumbersObs
+                .buffer( PUBLISH_MAX_VALUE + 1 )
+                .map( Main::sort )
+                .flatMapIterable( numbers -> numbers );
+
+        System.out.println( "Subscribing to Push Data Sorted Flux..." );
+        allNumbersSortedObs.subscribe( System.out::println );
+        allNumbersSortedObs.publish().connect();
+
+        sleep( PUBLISH_SLEEP_BOUND * ( PUBLISH_MAX_VALUE * 3 / 4 ) );
+    }
+
+    @Nonnull
+    private static List<Integer> sort( @Nonnull final List<Integer> numbers ) {
+        Collections.sort( numbers );
+
+        return numbers;
     }
 
     @Nonnull
@@ -119,20 +149,14 @@ public final class Main {
 
         final Observable<Integer> oddNumbersObs = Observable.create( emitter -> new Thread( () -> {
             for ( int count = 1; count <= maxValue; count += 2 ) {
-                try {
-                    Thread.sleep( random.nextInt( PUBLISH_SLEEP_BOUND ) );
-                } catch ( Throwable ignored ) {
-                }
+                sleep( random.nextInt( PUBLISH_SLEEP_BOUND ) );
 
                 emitter.onNext( count );
             }
         } ).start() );
         final Observable<Integer> evenNumbersObs = Observable.create( emitter -> new Thread( () -> {
             for ( int count = 2; count <= maxValue; count += 2 ) {
-                try {
-                    Thread.sleep( random.nextInt( PUBLISH_SLEEP_BOUND ) );
-                } catch ( Throwable ignored ) {
-                }
+                sleep( random.nextInt( PUBLISH_SLEEP_BOUND ) );
 
                 emitter.onNext( count );
             }
@@ -141,6 +165,13 @@ public final class Main {
         return zeroMono.toObservable()
                 .mergeWith( oddNumbersObs )
                 .mergeWith( evenNumbersObs );
+    }
+
+    private static void sleep( int millis ) {
+        try {
+            Thread.sleep( millis );
+        } catch ( Throwable ignored ) {
+        }
     }
 
 }
